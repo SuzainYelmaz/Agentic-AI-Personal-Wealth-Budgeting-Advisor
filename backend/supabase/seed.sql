@@ -14,13 +14,8 @@ DO $$
 DECLARE
     test_user_id UUID;
 BEGIN
-    -- Get the first user from auth (or replace with a specific UUID)
-    SELECT id INTO test_user_id FROM auth.users LIMIT 1;
-
-    IF test_user_id IS NULL THEN
-        RAISE NOTICE 'No auth user found. Please sign up first, then re-run this script.';
-        RETURN;
-    END IF;
+    -- Set the specific UUID provided by the user
+    test_user_id := '37b2c854-bf72-4021-8b60-fc345e420b49'::UUID;
 
     -- ============================================================
     -- User Profile
