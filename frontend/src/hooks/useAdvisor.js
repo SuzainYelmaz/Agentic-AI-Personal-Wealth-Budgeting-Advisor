@@ -4,14 +4,29 @@ import { api } from "../utils/api";
 export function useAdvisor() {
   const [plan, setPlan] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [analysisResult, setAnalysisResult] = useState(null);
   const [chatMessages, setChatMessages] = useState([]);
   const [chatLoading, setChatLoading] = useState(false);
 
   const runAnalysis = useCallback(async (year, month) => {
     setLoading(true);
-    try { const result = await api.runAdvisor(year, month); setPlan(result.plan); }
-    catch (e) { console.error("Advisor failed:", e); }
-    finally { setLoading(false); }
+    setAnalysisResult(null);
+    try {
+      const result = await api.runAdvisor(year, month);
+      console.log("Analysis result:", result);
+      if (result.plan) {
+        setPlan(result.plan);
+      }
+      setAnalysisResult({
+        success: result.success,
+        warnings: result.warnings || [],
+        messages: result.pipeline_messages || [],
+      });
+      return result;
+    } catch (e) {
+      console.error("Advisor failed:", e);
+      setAnalysisResult({ success: false, warnings: [e.message], messages: [] });
+    } finally { setLoading(false); }
   }, []);
 
   const sendChat = async (message, year, month) => {
@@ -25,5 +40,5 @@ export function useAdvisor() {
     } finally { setChatLoading(false); }
   };
 
-  return { plan, loading, runAnalysis, chatMessages, chatLoading, sendChat };
+  return { plan, loading, runAnalysis, analysisResult, chatMessages, chatLoading, sendChat };
 }

@@ -45,7 +45,7 @@ def categorizer_node(state: WealthAdvisorState) -> dict:
         return {"categorized_transactions": [], "messages": ["CategorizerAgent: No transactions"]}
     try:
         prompt = CATEGORIZE_PROMPT.format(transactions=_build_transaction_text(state["transactions"]))
-        response = get_llm(temperature=0.1).invoke(prompt)
+        response = get_llm(temperature=0.1, max_tokens=1500).invoke(prompt)
         categories = _parse_categories(response.content)
         count = _persist_categories(categories)
         return {

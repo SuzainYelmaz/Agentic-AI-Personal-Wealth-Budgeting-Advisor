@@ -39,7 +39,8 @@ def update_transaction_category(transaction_id: str, category: str, subcategory:
 def save_advisory_report(user_id: str, month: str, report: dict) -> dict:
     """Save a generated advisory report to Supabase."""
     result = (get_supabase().table("advisory_reports")
-              .upsert({"user_id": user_id, "month": month, "report": report})
+              .upsert({"user_id": user_id, "month": month, "report": report},
+                       on_conflict="user_id,month")
               .execute())
     return result.data[0] if result.data else {}
 

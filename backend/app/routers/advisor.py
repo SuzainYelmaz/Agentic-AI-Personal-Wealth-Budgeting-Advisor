@@ -2,10 +2,22 @@
 
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
+from langchain_core.messages import SystemMessage, HumanMessage
 from app.dependencies import get_user_id
 from app.agents.graph import wealth_advisor_graph
 
 router = APIRouter()
+
+# System prompt for concise, token-optimized chat responses
+CHAT_SYSTEM_PROMPT = """You are a concise personal financial advisor named WealthAdvisor.
+
+RULES:
+- Keep ALL responses under 150 words. Be direct and actionable.
+- For greetings (hi, hello, hey), respond with a single friendly sentence + ask how you can help.
+- Use bullet points for multiple items. No lengthy preambles or disclaimers.
+- When discussing money, always include specific numbers.
+- Never repeat the user's question back to them.
+- Do not use markdown headers. Keep formatting minimal."""
 
 
 class AdvisorRequest(BaseModel):
@@ -31,22 +43,37 @@ async def run_advisor(body: AdvisorRequest, user_id: str = Depends(get_user_id))
             "user_profile": {}, "spending_summary": [], "advisory_plan": None,
             "messages": [], "errors": [],
         })
-        if result.get("errors"):
-            return {"plan": result.get("advisory_plan"), "warnings": result["errors"]}
-        return {"plan": result["advisory_plan"], "messages": result["messages"]}
+        plan = result.get("advisory_plan")
+        errors = result.get("errors", [])
+        return {
+            "plan": plan,
+            "warnings": errors if errors else [],
+            "success": plan is not None,
+            "pipeline_messages": result.get("messages", []),
+        }
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
 
 @router.post("/chat")
 async def chat_with_advisor(body: ChatRequest, user_id: str = Depends(get_user_id)):
-    """Chat endpoint that provides context-aware financial advice."""
+    """Chat endpoint that provides context-aware financial advice with token optimization."""
     from app.services.openrouter import get_llm
     from app.tools.supabase_tools import fetch_monthly_transactions, fetch_budget_goals
+
     txns = fetch_monthly_transactions.invoke({"user_id": user_id, "year": body.year, "month": body.month})
     goals = fetch_budget_goals.invoke({"user_id": user_id})
-    prompt = (f"You are a personal financial advisor. User has {len(txns)} transactions "
-              f"and {len(goals)} budget goals this month.\n\nUser question: {body.message}\n\n"
-              f"Provide helpful, specific financial advice.")
-    response = get_llm(temperature=0.4).invoke(prompt)
+
+    # Build context-aware user message
+    context = (f"[Context: User has {len(txns)} transactions "
+               f"and {len(goals)} budget goals for {body.month}/{body.year}.]")
+    user_content = f"{context}\n\nUser: {body.message}"
+
+    messages = [
+        SystemMessage(content=CHAT_SYSTEM_PROMPT),
+        HumanMessage(content=user_content),
+    ]
+
+    # Use 500 max tokens for chat responses
+    response = get_llm(temperature=0.4, max_tokens=500).invoke(messages)
     return {"response": response.content}

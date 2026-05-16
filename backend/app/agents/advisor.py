@@ -47,8 +47,19 @@ def _format_goals(goals: list[dict]) -> str:
 
 
 def _parse_plan(response_text: str) -> dict:
-    """Parse the LLM advisory plan response."""
-    text = response_text.strip().strip("```json").strip("```").strip()
+    """Parse the LLM advisory plan response with robust extraction."""
+    text = response_text.strip()
+    # Strip markdown code fences
+    if text.startswith("```"):
+        text = text.split("\n", 1)[-1] if "\n" in text else text[3:]
+    if text.endswith("```"):
+        text = text[:-3]
+    text = text.strip()
+    # Try to find JSON object boundaries
+    start = text.find("{")
+    end = text.rfind("}") + 1
+    if start >= 0 and end > start:
+        text = text[start:end]
     return json.loads(text)
 
 
@@ -62,10 +73,18 @@ def advisor_node(state: WealthAdvisorState) -> dict:
             spending_summary=_format_spending(state.get("spending_summary", [])),
             budget_goals=_format_goals(state.get("budget_goals", [])),
         )
-        response = get_llm(temperature=0.3).invoke(prompt)
+        response = get_llm(temperature=0.3, max_tokens=4000).invoke(prompt)
+        print(f"[AdvisorAgent] Raw response length: {len(response.content)} chars")
+        print(f"[AdvisorAgent] Response preview: {response.content[:200]}...")
         plan = _parse_plan(response.content)
+        # Override spending_breakdown with actual structured data from BudgetAnalystAgent
+        # (LLM may return it as formatted strings instead of objects)
+        plan["spending_breakdown"] = state.get("spending_summary", [])
         month_key = f"{state['year']}-{state['month']:02d}"
         save_advisory_report.invoke({"user_id": state["user_id"], "month": month_key, "report": plan})
         return {"advisory_plan": plan, "messages": [f"AdvisorAgent: Plan generated for {month_key}"]}
     except Exception as e:
+        print(f"[AdvisorAgent] ERROR: {e}")
+        print(f"[AdvisorAgent] Raw content: {response.content if 'response' in dir() else 'no response'}")
         return {"errors": [f"Advisor error: {e}"]}
+

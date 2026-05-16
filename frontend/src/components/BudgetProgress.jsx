@@ -35,7 +35,12 @@ export default function BudgetProgress({ data = [] }) {
       </div>
       <div className="budget-list">
         {data.map((item) => <BudgetItem key={item.category} item={item} />)}
-        {!data.length && <p className="text-sm text-muted text-center">No budget data yet</p>}
+        {!data.length && (
+          <div className="empty-state">
+            <h3>No budget data</h3>
+            <p>Set budget goals and run analysis to track your progress</p>
+          </div>
+        )}
       </div>
     </AnimatedCard>
   );

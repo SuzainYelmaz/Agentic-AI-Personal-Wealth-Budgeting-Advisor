@@ -1,13 +1,13 @@
 """Shared FastAPI dependencies for auth and Supabase access."""
 
 from fastapi import Depends, HTTPException, Header
-from app.services.supabase_client import get_supabase
+from app.services.supabase_client import get_auth_supabase
 
 
 async def get_current_user(authorization: str = Header(...)):
     """Extract and verify user from Supabase JWT token."""
     token = authorization.replace("Bearer ", "")
-    supabase = get_supabase()
+    supabase = get_auth_supabase()
     try:
         user = supabase.auth.get_user(token)
         return user.user

@@ -4,6 +4,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { supabase } from "../config/supabase";
 
 export default function Register() {
+  const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -15,7 +16,11 @@ export default function Register() {
     setError("");
     setLoading(true);
     try {
-      const { error: authError } = await supabase.auth.signUp({ email, password });
+      const { error: authError } = await supabase.auth.signUp({
+        email,
+        password,
+        options: { data: { full_name: fullName } },
+      });
       if (authError) throw authError;
       navigate("/login");
     } catch (err) {
@@ -30,7 +35,7 @@ export default function Register() {
 
       <motion.div
         className="auth-card"
-        initial={{ opacity: 0, y: 30, scale: 0.95 }}
+        initial={{ opacity: 0, y: 30, scale: 0.97 }}
         animate={{ opacity: 1, y: 0, scale: 1 }}
         transition={{ type: "spring", stiffness: 200, damping: 25 }}
       >
@@ -41,6 +46,11 @@ export default function Register() {
         {error && <div className="auth-error">{error}</div>}
 
         <form onSubmit={handleSubmit}>
+          <div className="form-group">
+            <label className="form-label" htmlFor="register-name">Full Name</label>
+            <input id="register-name" className="form-input" type="text" placeholder="John Doe"
+              value={fullName} onChange={(e) => setFullName(e.target.value)} required />
+          </div>
           <div className="form-group">
             <label className="form-label" htmlFor="register-email">Email</label>
             <input id="register-email" className="form-input" type="email" placeholder="you@example.com"

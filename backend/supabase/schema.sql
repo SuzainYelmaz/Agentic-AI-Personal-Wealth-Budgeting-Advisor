@@ -1,5 +1,5 @@
 -- ============================================================
--- Wealth Advisor Database Schema
+-- Wealth Advisor Database Schema (Real User Data)
 -- Run this in Supabase SQL Editor
 -- ============================================================
 
@@ -17,12 +17,29 @@ CREATE TABLE IF NOT EXISTS user_profiles (
     currency TEXT DEFAULT 'USD',
     financial_goals TEXT DEFAULT '',
     risk_tolerance TEXT DEFAULT 'moderate' CHECK (risk_tolerance IN ('conservative', 'moderate', 'aggressive')),
+    onboarding_complete BOOLEAN DEFAULT false,
     created_at TIMESTAMPTZ DEFAULT NOW(),
     updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
 -- ============================================================
--- Transactions
+-- Income Entries (track multiple income sources)
+-- ============================================================
+CREATE TABLE IF NOT EXISTS income_entries (
+    id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+    user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL,
+    source TEXT NOT NULL,
+    amount NUMERIC(12,2) NOT NULL CHECK (amount > 0),
+    income_date DATE NOT NULL,
+    is_recurring BOOLEAN DEFAULT false,
+    notes TEXT DEFAULT '',
+    created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE INDEX idx_income_entries_user_date ON income_entries(user_id, income_date);
+
+-- ============================================================
+-- Transactions (user-entered expenses)
 -- ============================================================
 CREATE TABLE IF NOT EXISTS transactions (
     id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
@@ -41,7 +58,7 @@ CREATE INDEX idx_transactions_user_date ON transactions(user_id, transaction_dat
 CREATE INDEX idx_transactions_category ON transactions(user_id, category);
 
 -- ============================================================
--- Budget Goals
+-- Budget Goals (user-defined spending limits)
 -- ============================================================
 CREATE TABLE IF NOT EXISTS budget_goals (
     id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
@@ -82,12 +99,16 @@ CREATE INDEX idx_chat_history_user ON chat_history(user_id, created_at DESC);
 
 -- ============================================================
 -- Auto-create user profile on auth signup
+-- Extracts full_name from auth metadata if provided
 -- ============================================================
 CREATE OR REPLACE FUNCTION public.handle_new_user()
 RETURNS TRIGGER AS $$
 BEGIN
-    INSERT INTO public.user_profiles (user_id)
-    VALUES (NEW.id);
+    INSERT INTO public.user_profiles (user_id, full_name)
+    VALUES (
+        NEW.id,
+        COALESCE(NEW.raw_user_meta_data ->> 'full_name', '')
+    );
     RETURN NEW;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public;
@@ -115,3 +136,40 @@ CREATE OR REPLACE TRIGGER update_user_profiles_timestamp
 CREATE OR REPLACE TRIGGER update_advisory_reports_timestamp
     BEFORE UPDATE ON advisory_reports
     FOR EACH ROW EXECUTE FUNCTION update_updated_at();
+
+-- ============================================================
+-- Row Level Security (RLS)
+-- Users can only access their own data
+-- ============================================================
+
+-- User Profiles
+ALTER TABLE user_profiles ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Users can view own profile" ON user_profiles
+    FOR SELECT USING (auth.uid() = user_id);
+CREATE POLICY "Users can update own profile" ON user_profiles
+    FOR UPDATE USING (auth.uid() = user_id);
+
+-- Income Entries
+ALTER TABLE income_entries ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Users can manage own income" ON income_entries
+    FOR ALL USING (auth.uid() = user_id);
+
+-- Transactions
+ALTER TABLE transactions ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Users can manage own transactions" ON transactions
+    FOR ALL USING (auth.uid() = user_id);
+
+-- Budget Goals
+ALTER TABLE budget_goals ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Users can manage own budgets" ON budget_goals
+    FOR ALL USING (auth.uid() = user_id);
+
+-- Advisory Reports
+ALTER TABLE advisory_reports ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Users can manage own reports" ON advisory_reports
+    FOR ALL USING (auth.uid() = user_id);
+
+-- Chat History
+ALTER TABLE chat_history ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Users can manage own chats" ON chat_history
+    FOR ALL USING (auth.uid() = user_id);

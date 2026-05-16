@@ -21,13 +21,22 @@ async function apiFetch(endpoint, options = {}) {
 }
 
 export const api = {
+  // Transactions
   getTransactions: (year, month) => apiFetch(`/transactions/?year=${year}&month=${month}`),
   createTransaction: (data) => apiFetch("/transactions/", { method: "POST", body: JSON.stringify(data) }),
   deleteTransaction: (id) => apiFetch(`/transactions/${id}`, { method: "DELETE" }),
+
+  // Budget Goals
   getBudgetGoals: () => apiFetch("/budgets/"),
   createBudgetGoal: (data) => apiFetch("/budgets/", { method: "POST", body: JSON.stringify(data) }),
   updateBudgetGoal: (id, data) => apiFetch(`/budgets/${id}`, { method: "PATCH", body: JSON.stringify(data) }),
   deleteBudgetGoal: (id) => apiFetch(`/budgets/${id}`, { method: "DELETE" }),
+
+  // Advisor
   runAdvisor: (year, month) => apiFetch("/advisor/analyze", { method: "POST", body: JSON.stringify({ year, month }) }),
   chatWithAdvisor: (message, year, month) => apiFetch("/advisor/chat", { method: "POST", body: JSON.stringify({ message, year, month }) }),
+
+  // Profile
+  getProfile: () => apiFetch("/profile/"),
+  updateProfile: (data) => apiFetch("/profile/", { method: "PATCH", body: JSON.stringify(data) }),
 };

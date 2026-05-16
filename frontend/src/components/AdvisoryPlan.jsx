@@ -29,8 +29,10 @@ export default function AdvisoryPlan({ plan }) {
   return (
     <div className="advisory-plan">
       <AnimatedCard className="advisory-summary card-gradient" index={8}>
-        <h3 className="card-title" style={{ color: "white", marginBottom: 8 }}>📊 Financial Advisory Plan</h3>
-        <p style={{ color: "rgba(255,255,255,0.9)" }}>{plan.summary}</p>
+        <h3 className="card-title" style={{ color: "var(--text-inverse)", marginBottom: "var(--space-2)", fontFamily: "var(--font-display)", fontSize: "var(--text-xl)" }}>
+          📊 Financial Advisory Plan
+        </h3>
+        <p>{plan.summary}</p>
       </AnimatedCard>
 
       <div className="advisory-steps">
@@ -41,7 +43,7 @@ export default function AdvisoryPlan({ plan }) {
 
       {plan.risk_alerts?.length > 0 && (
         <div className="risk-alerts">
-          <h4 className="font-semibold mb-md">⚠️ Risk Alerts</h4>
+          <h4 style={{ fontWeight: 600, marginBottom: "var(--space-4)", color: "var(--dark-slate-grey)" }}>⚠️ Risk Alerts</h4>
           {plan.risk_alerts.map((alert, i) => (
             <div key={i} className="risk-alert">
               <FiAlertTriangle size={16} style={{ flexShrink: 0, marginTop: 2 }} />
