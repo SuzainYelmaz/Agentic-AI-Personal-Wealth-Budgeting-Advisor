@@ -11,9 +11,9 @@ from app.routers import auth, advisor, transactions, budgets
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Startup and shutdown lifecycle hooks."""
-    print("🚀 Wealth Advisor API starting...")
+    print("Wealth Advisor API starting...")
     yield
-    print("👋 Wealth Advisor API shutting down...")
+    print("Wealth Advisor API shutting down...")
 
 
 app = FastAPI(

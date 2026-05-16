@@ -2,14 +2,14 @@ import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, AreaChart, Area, XAx
 import AnimatedCard from "./AnimatedCard";
 import { formatCurrency } from "../utils/formatters";
 
-const CHART_COLORS = ["#4F46E5", "#7C3AED", "#a855f7", "#10b981", "#f59e0b", "#ef4444", "#06b6d4", "#ec4899"];
+const CHART_COLORS = ["#00FF87", "#60EFFF", "#B429F9", "#FFB020", "#FF4A5A", "#00B0FF", "#E040FB", "#00E676"];
 
 function CustomTooltip({ active, payload }) {
   if (!active || !payload?.length) return null;
   return (
-    <div className="card" style={{ padding: "10px 14px", fontSize: "0.8rem" }}>
-      <strong>{payload[0].name || payload[0].payload?.category}</strong>
-      <div style={{ color: "#475569" }}>{formatCurrency(payload[0].value)}</div>
+    <div className="card" style={{ padding: "10px 14px", fontSize: "0.8rem", background: "var(--bg-glass)", borderColor: "var(--border-medium)" }}>
+      <strong style={{ color: "var(--text-primary)" }}>{payload[0].name || payload[0].payload?.category}</strong>
+      <div style={{ color: "var(--accent-start)", fontWeight: "bold", marginTop: "4px" }}>{formatCurrency(payload[0].value)}</div>
     </div>
   );
 }
@@ -24,10 +24,10 @@ export function SpendingPieChart({ data = [] }) {
       </div>
       <ResponsiveContainer width="100%" height={280}>
         <PieChart>
-          <Pie data={chartData} cx="50%" cy="50%" innerRadius={65} outerRadius={110}
-            paddingAngle={3} dataKey="value" animationBegin={200} animationDuration={800}>
+          <Pie data={chartData} cx="50%" cy="50%" innerRadius={70} outerRadius={115}
+            paddingAngle={4} dataKey="value" animationBegin={200} animationDuration={1000}>
             {chartData.map((_, i) => (
-              <Cell key={i} fill={CHART_COLORS[i % CHART_COLORS.length]} />
+              <Cell key={i} fill={CHART_COLORS[i % CHART_COLORS.length]} stroke="transparent" />
             ))}
           </Pie>
           <Tooltip content={<CustomTooltip />} />
@@ -61,16 +61,16 @@ export function SpendingAreaChart({ transactions = [] }) {
         <AreaChart data={cumulativeData}>
           <defs>
             <linearGradient id="gradientArea" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor="#4F46E5" stopOpacity={0.3} />
-              <stop offset="100%" stopColor="#4F46E5" stopOpacity={0} />
+              <stop offset="0%" stopColor="#60EFFF" stopOpacity={0.4} />
+              <stop offset="100%" stopColor="#60EFFF" stopOpacity={0} />
             </linearGradient>
           </defs>
-          <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,0,0,0.06)" />
-          <XAxis dataKey="day" tick={{ fontSize: 12 }} axisLine={false} tickLine={false} />
-          <YAxis tick={{ fontSize: 12 }} axisLine={false} tickLine={false} tickFormatter={(v) => `$${v}`} />
+          <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" />
+          <XAxis dataKey="day" tick={{ fontSize: 12, fill: "#94A3B8" }} axisLine={false} tickLine={false} />
+          <YAxis tick={{ fontSize: 12, fill: "#94A3B8" }} axisLine={false} tickLine={false} tickFormatter={(v) => `$${v}`} />
           <Tooltip content={<CustomTooltip />} />
-          <Area type="monotone" dataKey="cumulative" stroke="#4F46E5" strokeWidth={2.5}
-            fill="url(#gradientArea)" animationDuration={1000} />
+          <Area type="monotone" dataKey="cumulative" stroke="#60EFFF" strokeWidth={3}
+            fill="url(#gradientArea)" animationDuration={1200} />
         </AreaChart>
       </ResponsiveContainer>
     </AnimatedCard>

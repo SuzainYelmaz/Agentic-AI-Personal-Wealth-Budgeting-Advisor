@@ -1,10 +1,21 @@
+import { supabase } from "../config/supabase";
+
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8000/api";
 
 async function apiFetch(endpoint, options = {}) {
-  const token = localStorage.getItem("access_token");
+  const { data: { session } } = await supabase.auth.getSession();
+  const token = session?.access_token;
   const headers = { "Content-Type": "application/json", ...options.headers };
   if (token) headers["Authorization"] = `Bearer ${token}`;
+  
   const res = await fetch(`${API_URL}${endpoint}`, { ...options, headers });
+  
+  if (res.status === 401) {
+    await supabase.auth.signOut();
+    window.location.href = "/login";
+    throw new Error("Session expired. Please log in again.");
+  }
+  
   if (!res.ok) throw new Error((await res.json()).detail || res.statusText);
   return res.json();
 }

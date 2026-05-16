@@ -11,8 +11,9 @@ async def get_current_user(authorization: str = Header(...)):
     try:
         user = supabase.auth.get_user(token)
         return user.user
-    except Exception:
-        raise HTTPException(status_code=401, detail="Invalid or expired token")
+    except Exception as e:
+        print(f"Auth error: {str(e)}")
+        raise HTTPException(status_code=401, detail=f"Invalid or expired token: {str(e)}")
 
 
 async def get_user_id(user=Depends(get_current_user)) -> str:

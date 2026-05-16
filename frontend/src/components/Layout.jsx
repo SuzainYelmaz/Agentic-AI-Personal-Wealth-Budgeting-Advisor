@@ -7,6 +7,10 @@ export default function Layout({ children, chatMessages, chatLoading, onSendChat
 
   return (
     <div className="app-layout">
+      {/* Background Animated Orbs */}
+      <div className="dashboard-bg-orb orb-1"></div>
+      <div className="dashboard-bg-orb orb-2"></div>
+
       <Navbar onToggleSidebar={() => setSidebarOpen(!sidebarOpen)} sidebarOpen={sidebarOpen} />
 
       <main className={`main-content ${sidebarOpen ? "" : "sidebar-closed"}`}>

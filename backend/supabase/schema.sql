@@ -83,19 +83,19 @@ CREATE INDEX idx_chat_history_user ON chat_history(user_id, created_at DESC);
 -- ============================================================
 -- Auto-create user profile on auth signup
 -- ============================================================
-CREATE OR REPLACE FUNCTION handle_new_user()
+CREATE OR REPLACE FUNCTION public.handle_new_user()
 RETURNS TRIGGER AS $$
 BEGIN
-    INSERT INTO user_profiles (user_id)
+    INSERT INTO public.user_profiles (user_id)
     VALUES (NEW.id);
     RETURN NEW;
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public;
 
 CREATE OR REPLACE TRIGGER on_auth_user_created
     AFTER INSERT ON auth.users
     FOR EACH ROW
-    EXECUTE FUNCTION handle_new_user();
+    EXECUTE FUNCTION public.handle_new_user();
 
 -- ============================================================
 -- Auto-update updated_at timestamp
