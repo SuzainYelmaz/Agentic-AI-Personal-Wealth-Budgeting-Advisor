@@ -9,7 +9,8 @@ const cardVariants = {
 };
 
 export default function AnimatedCard({ children, className = "", index = 0, gradient = false }) {
-  const cardClass = `card ${gradient ? "card-gradient" : ""} ${className}`.trim();
+  // If gradient=true, use the dark stone variation from the reference design
+  const cardClass = `card-stone p-6 flex flex-col ${gradient ? "bg-stone-900 text-stone-50" : ""} ${className}`.trim();
 
   return (
     <motion.div
@@ -18,7 +19,7 @@ export default function AnimatedCard({ children, className = "", index = 0, grad
       initial="hidden"
       animate="visible"
       custom={index}
-      whileHover={{ y: -2, transition: { duration: 0.2 } }}
+      whileHover={{ scale: 0.98, transition: { duration: 0.3 } }}
     >
       {children}
     </motion.div>

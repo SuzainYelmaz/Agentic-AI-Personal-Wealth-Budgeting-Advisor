@@ -1,6 +1,6 @@
 """Advisor router — triggers the LangGraph wealth advisor workflow."""
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel
 from langchain_core.messages import SystemMessage, HumanMessage
 from app.dependencies import get_user_id
@@ -53,6 +53,30 @@ async def run_advisor(body: AdvisorRequest, user_id: str = Depends(get_user_id))
         }
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/report")
+async def get_advisory_report(
+    year: int = Query(...),
+    month: int = Query(...),
+    user_id: str = Depends(get_user_id),
+):
+    """Fetch the stored advisory report for a given month without re-running AI."""
+    from app.services.supabase_client import get_supabase
+    month_key = f"{year}-{month:02d}"
+    try:
+        result = (get_supabase().table("advisory_reports")
+                  .select("*")
+                  .eq("user_id", user_id)
+                  .eq("month", month_key)
+                  .single()
+                  .execute())
+        if not result.data:
+            return {"plan": None, "found": False}
+        return {"plan": result.data.get("report"), "found": True}
+    except Exception:
+        # Supabase raises an error when single() finds no row
+        return {"plan": None, "found": False}
 
 
 @router.post("/chat")

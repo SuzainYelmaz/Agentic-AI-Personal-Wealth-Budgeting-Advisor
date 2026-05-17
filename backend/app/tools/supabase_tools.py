@@ -52,3 +52,15 @@ def fetch_user_profile(user_id: str) -> dict:
               .select("*").eq("user_id", user_id)
               .single().execute())
     return result.data or {}
+
+
+@tool
+def fetch_advisory_report(user_id: str, month: str) -> dict:
+    """Fetch a previously stored advisory report for a given user and month (YYYY-MM)."""
+    result = (get_supabase().table("advisory_reports")
+              .select("*")
+              .eq("user_id", user_id)
+              .eq("month", month)
+              .single()
+              .execute())
+    return result.data or {}

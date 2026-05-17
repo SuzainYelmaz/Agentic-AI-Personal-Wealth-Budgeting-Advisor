@@ -35,6 +35,7 @@ export const api = {
   // Advisor
   runAdvisor: (year, month) => apiFetch("/advisor/analyze", { method: "POST", body: JSON.stringify({ year, month }) }),
   chatWithAdvisor: (message, year, month) => apiFetch("/advisor/chat", { method: "POST", body: JSON.stringify({ message, year, month }) }),
+  getAdvisoryReport: (year, month) => apiFetch(`/advisor/report?year=${year}&month=${month}`),
 
   // Profile
   getProfile: () => apiFetch("/profile/"),
